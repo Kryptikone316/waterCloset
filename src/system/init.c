@@ -24,43 +24,49 @@ static void showLoadingStep(float step, float maxSteps);
 
 void initSDL(void)
 {
-	int rendererFlags, windowFlags;
-
-	rendererFlags = SDL_RENDERER_ACCELERATED;
-
-	windowFlags = 0;
-
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) < 0)
 	{
 		printf("Couldn't initialize SDL: %s\n", SDL_GetError());
 		exit(1);
 	}
 
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
-    {
-        printf("Couldn't initialize SDL Mixer\n");
+	if (hwdisp_init() != 0)
+	{
+		printf("hwdisp_init failed\n");
 		exit(1);
+	}
+
+	joykey_init();
+
+	if (!sf3500_mixer_init())
+	{
+		printf("sf3500_mixer_init failed, continuing without audio\n");
 	}
 
 	createSaveFolder();
 
 	loadConfig();
 
-	if (app.config.fullscreen)
-	{
-		windowFlags |= SDL_WINDOW_FULLSCREEN;
-	}
-
-	Mix_Volume(-1, app.config.soundVolume * 1.28);
-	Mix_VolumeMusic(app.config.musicVolume * 1.28);
-
-    Mix_AllocateChannels(CH_MAX);
-
-	app.window = SDL_CreateWindow("Water Closet", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, app.config.winWidth, app.config.winHeight, windowFlags);
-
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-
-	app.renderer = SDL_CreateRenderer(app.window, -1, rendererFlags);
+	/* No real window/display on this device - app.renderer is a software
+	 * renderer bound to an owned surface we read directly at present time
+	 * (same "own the final pixel buffer, skip the accelerated path
+	 * entirely" fix as every other SDL2 port on this hardware - there is
+	 * no GPU here, SDL_RENDERER_ACCELERATED would have silently fallen
+	 * back to software anyway, just via a much slower SDL_RenderReadPixels
+	 * round-trip at present time instead of a direct pointer read).
+	 *
+	 * The owned surface is physically 640x360 (HW_PHYS_W/H, draw.c), not
+	 * SCREEN_WIDTH x SCREEN_HEIGHT - SDL_RenderSetLogicalSize makes the
+	 * renderer transparently scale every draw call from the game's 1280x720
+	 * logical coordinate space down onto this smaller physical surface, the
+	 * same mechanism the stock game's own "640 x 360" Window Size option
+	 * relies on. This is what actually lowers the real rasterization cost
+	 * on this GPU-less device - unlike a downscale applied only at the
+	 * final present step, every individual tile/entity blit is now cheaper,
+	 * not just the one full-frame copy at the end. */
+	app.hwSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, HW_PHYS_W, HW_PHYS_H, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0);
+	app.renderer = SDL_CreateSoftwareRenderer(app.hwSurface);
+	SDL_RenderSetLogicalSize(app.renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
 
@@ -73,26 +79,6 @@ void initSDL(void)
 	SDL_ShowCursor(0);
 }
 
-static void initJoypad(void)
-{
-	int i, n;
-
-	n = SDL_NumJoysticks();
-
-	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "%d joysticks available", n);
-
-	for (i = 0 ; i < n ; i++)
-	{
-		app.joypad = SDL_JoystickOpen(i);
-
-		if (app.joypad)
-		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "Joystick [name='%s', Axes=%d, Buttons=%d]", SDL_JoystickNameForIndex(i), SDL_JoystickNumAxes(app.joypad), SDL_JoystickNumButtons(app.joypad));
-			return;
-		}
-	}
-}
-
 void initGame(void)
 {
 	int i, numInitFuns;
@@ -101,7 +87,6 @@ void initGame(void)
 		initAtlas,
 		initFonts,
 		initSounds,
-		initJoypad,
 		initWidgets,
 		initEntityFactory,
 		initParticles,
@@ -147,18 +132,17 @@ static void showLoadingStep(float step, float maxSteps)
 
 void cleanup(void)
 {
-	if (app.joypad != NULL)
-	{
-		SDL_JoystickClose(app.joypad);
-	}
-
 	destroyTextures();
 
 	destroySounds();
 
+	sf3500_mixer_deinit();
+
+	hwdisp_deinit();
+
 	SDL_DestroyRenderer(app.renderer);
 
-	SDL_DestroyWindow(app.window);
+	SDL_FreeSurface(app.hwSurface);
 
 	TTF_Quit();
 

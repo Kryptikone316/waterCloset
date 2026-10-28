@@ -22,6 +22,39 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void initColor(SDL_Color *c, int r, int g, int b);
 
+/* Real HCGE canvas on this device is 640x480 4:3 (confirmed on real
+ * hardware via ccleste's run.log - see cceleste_handoff memory). app.hwSurface
+ * is physically HW_PHYS_W x HW_PHYS_H = 640x360 (init.c; the game's logical
+ * 1280x720 coordinate space is scaled onto it by SDL_RenderSetLogicalSize,
+ * not here) - exactly the panel's width already, so this is a direct 1:1
+ * pixel copy (format convert only, no scaling) plus a vertical letterbox
+ * to pad 360 up to 480. */
+#define HW_OUT_W 640
+#define HW_OUT_H 480
+static unsigned short hwPresentBuf[HW_OUT_W * HW_OUT_H];
+
+static void presentToHardware(void)
+{
+	int x, y;
+	const int yOff = (HW_OUT_H - HW_PHYS_H) / 2;
+
+	memset(hwPresentBuf, 0, sizeof(hwPresentBuf));
+
+	for (y = 0 ; y < HW_PHYS_H ; y++)
+	{
+		Uint32 *srow = (Uint32 *)((Uint8 *)app.hwSurface->pixels + y * app.hwSurface->pitch);
+		unsigned short *drow = hwPresentBuf + (y + yOff) * HW_OUT_W;
+
+		for (x = 0 ; x < HW_PHYS_W ; x++)
+		{
+			Uint32 px = srow[x];
+			drow[x] = (unsigned short)(((px >> 8) & 0xF800) | ((px >> 5) & 0x07E0) | ((px >> 3) & 0x001F));
+		}
+	}
+
+	hwdisp_present(hwPresentBuf, HW_OUT_W, HW_OUT_H, HW_OUT_W * sizeof(unsigned short));
+}
+
 void initGraphics(void)
 {
 	initColor(&app.colors.red, 255, 0, 0);
@@ -36,12 +69,17 @@ void initGraphics(void)
 	initColor(&app.colors.lightGrey, 192, 192, 192);
 	initColor(&app.colors.darkGrey, 128, 128, 128);
 
-	app.backBuffer = SDL_CreateTexture(app.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
+/* No app.backBuffer render-target texture on this device on purpose -
+ * SDL_RenderSetLogicalSize (init.c) only scales draw calls made against the
+ * renderer's DEFAULT target, not a custom SDL_TEXTUREACCESS_TARGET texture.
+ * Drawing straight to the default target (our owned, physically-640x360
+ * app.hwSurface) is what actually makes every individual tile/entity blit
+ * cheaper, not just the one final frame copy the stock backBuffer design
+ * would otherwise still do at full logical resolution. */
 void prepareScene(void)
 {
-	SDL_SetRenderTarget(app.renderer, app.backBuffer);
 	SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
 	SDL_RenderClear(app.renderer);
 }
@@ -53,9 +91,9 @@ void presentScene(void)
 		drawText(SCREEN_WIDTH - 5, SCREEN_HEIGHT - 30, 32, TEXT_RIGHT, app.colors.white, "%dfps | Ents: %d | Cols: %d | Draw: %d", app.dev.fps, app.dev.ents, app.dev.collisions, app.dev.drawing);
 	}
 
-	SDL_SetRenderTarget(app.renderer, NULL);
-	SDL_RenderCopy(app.renderer, app.backBuffer, NULL, NULL);
 	SDL_RenderPresent(app.renderer);
+
+	presentToHardware();
 }
 
 void blit(SDL_Texture *texture, int x, int y, int center, SDL_RendererFlip flip)

@@ -263,7 +263,7 @@ typedef struct {
 	char saveDir[MAX_FILENAME_LENGTH];
 	SDL_Renderer *renderer;
 	SDL_Window *window;
-	SDL_Texture *backBuffer;
+	SDL_Surface *hwSurface;
 	int keyboard[MAX_KEYBOARD_KEYS];
 	int joypadButton[SDL_CONTROLLER_BUTTON_MAX];
 	int joypadAxis[JOYPAD_AXIS_MAX];

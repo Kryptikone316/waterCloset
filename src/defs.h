@@ -24,8 +24,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CAROLINE(a,b) (((a)<(b))?(a):(b))
 #define STRNCPY(dest, src, n) strncpy(dest, src, n); dest[n - 1] = '\0'
 
+/* Kept at the stock 1280x720 logical coordinate space on purpose - every
+ * JSON-authored UI widget position (data/widgets/*.json) is an absolute
+ * pixel coordinate tuned for this canvas, and camera.c's viewport math
+ * reads these macros too. Lowering the actual render COST on this GPU-less
+ * device is handled instead by SDL_RenderSetLogicalSize (see init.c) -
+ * SDL's renderer transparently scales every draw call from this logical
+ * space down onto a smaller physical surface, the same mechanism the
+ * stock game's own "640 x 360" Window Size option relies on. */
 #define SCREEN_WIDTH   1280
 #define SCREEN_HEIGHT  720
+
+/* The actual physical size of app.hwSurface (init.c) - exactly the "640 x
+ * 360" Window Size option, 2x smaller than SCREEN_WIDTH/HEIGHT in each
+ * dimension so SDL_RenderSetLogicalSize's scale factor is an exact 0.5. */
+#define HW_PHYS_W   640
+#define HW_PHYS_H   360
 
 #define CONFIG_FILENAME    "config.json"
 #define SAVE_FILENAME      "game.json"

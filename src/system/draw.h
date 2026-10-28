@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../common.h"
 
+#include "../../sf3500/hwdisp.hpp"
+
 extern void drawText(int x, int y, int size, int align, SDL_Color color, const char *format, ...);
 
 extern App app;

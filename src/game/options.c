@@ -189,7 +189,7 @@ static void sound(void)
 
 	app.config.soundVolume = val;
 
-	Mix_Volume(-1, app.config.soundVolume * 1.28);
+	setSoundVolume(app.config.soundVolume);
 }
 
 static void music(void)
@@ -200,7 +200,7 @@ static void music(void)
 
 	app.config.musicVolume = val;
 
-	Mix_VolumeMusic(app.config.musicVolume * 1.28);
+	setMusicVolume(app.config.musicVolume);
 }
 
 static void windowSize(void)

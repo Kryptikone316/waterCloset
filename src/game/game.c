@@ -108,7 +108,12 @@ void saveGame(void)
 
 	sprintf(filename, "%s/%s", app.saveDir, SAVE_FILENAME);
 
-	out = cJSON_Print(root);
+	/* Unformatted, not Print - this runs synchronously on every single
+	 * stage load (initStage() in stage.c), hitting the SD card every
+	 * time. Nothing reads this file expecting indentation - loadGame()
+	 * just calls cJSON_Parse, which doesn't care - so this is strictly
+	 * less CPU + a smaller write for identical data. */
+	out = cJSON_PrintUnformatted(root);
 
 	writeFile(filename, out);
 
@@ -214,7 +219,7 @@ void saveConfig(void)
 
 	sprintf(filename, "%s/%s", app.saveDir, CONFIG_FILENAME);
 
-	out = cJSON_Print(root);
+	out = cJSON_PrintUnformatted(root);
 
 	writeFile(filename, out);
 

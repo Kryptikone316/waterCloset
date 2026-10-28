@@ -18,13 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include <SDL2/SDL_mixer.h>
-
 #include "../common.h"
 
 #define SHOW_CONTROLS  1
 #define SHOW_NORMAL    0
 
+extern void setSoundVolume(int vol);
+extern void setMusicVolume(int vol);
 extern void calculateWidgetFrame(const char *groupName);
 extern void doWidgets(const char *groupName);
 extern void drawText(int x, int y, int size, int align, SDL_Color color, const char *format, ...);

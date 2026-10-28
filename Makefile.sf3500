@@ -1,0 +1,39 @@
+# Cross build for the Datafrog SF3500. Use it as:
+#   make -f Makefile.sf3500 SF3500_TC=/path/to/toolchain/host SDL2_TTF_SRC=/path/to/SDL2_ttf-2.0.15
+# (the upstream makefile is for desktop builds). SDL_ttf is compiled in from its
+# source; SDL2, SDL2_image and freetype come from the toolchain's sysroot.
+SF3500_TC ?= $(error set SF3500_TC to the toolchain host directory)
+SDL2_TTF_SRC ?= $(error set SDL2_TTF_SRC to an SDL2_ttf 2.0.15 source tree)
+TOOLCHAIN_BIN := $(SF3500_TC)/bin
+SYSROOT := $(SF3500_TC)/mipsel-buildroot-linux-gnu/sysroot
+
+CC  := $(TOOLCHAIN_BIN)/mips-mti-linux-gnu-gcc
+CXX := $(TOOLCHAIN_BIN)/mips-mti-linux-gnu-g++
+
+ARCHFLAGS := -mips32r2 -mtune=74kc -mhard-float --sysroot=$(SYSROOT)
+INCLUDES  := -I$(SYSROOT)/usr/include/SDL2 -I$(SYSROOT)/usr/include/freetype2 -I$(SDL2_TTF_SRC) -Isf3500
+CFLAGS    := $(ARCHFLAGS) $(INCLUDES) -O2 -w -DDATA_DIR=\".\" -DVERSION=1.0 -DREVISION=0
+CXXFLAGS  := $(ARCHFLAGS) $(INCLUDES) -O2 -w -fno-exceptions -fno-rtti -fpermissive
+LIBS      := -lSDL2 -lSDL2_image -lfreetype -lpthread -ldl -lm
+
+BIN := waterCloset.mipsel
+
+C_SRCS := $(shell find src -name '*.c' -not -name mapEditor.c -not -path 'src/plat/win32/*') $(SDL2_TTF_SRC)/SDL_ttf.c
+CXX_SRCS := sf3500/hwdisp.cpp sf3500/hwaudio.cpp sf3500/joykey.cpp sf3500/sf3500_mixer.cpp sf3500/stb_vorbis_impl.cpp
+
+OBJS := $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o)
+
+.PHONY: all clean
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	$(CXX) $(ARCHFLAGS) $(OBJS) -o $@ $(LIBS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(BIN) $(OBJS)

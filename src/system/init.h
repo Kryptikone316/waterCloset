@@ -19,12 +19,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <time.h>
 
 #include "../common.h"
+
+#include "../../sf3500/hwdisp.hpp"
+#include "../../sf3500/joykey.hpp"
+#include "../../sf3500/sf3500_mixer.hpp"
 
 extern void createSaveFolder(void);
 extern void destroySounds(void);
