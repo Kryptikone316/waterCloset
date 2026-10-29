@@ -21,3 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../common.h"
 
 extern App app;
+extern const char *getControlLabel(int control);
+extern unsigned int getControlButtons(int control);
+extern void translateKeyNames(char *buf, int size);

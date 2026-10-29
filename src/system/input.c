@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 
 #include "../../sf3500/joykey.hpp"
+extern unsigned int getControlButtons(int control);
 #include "../../sf3500/hwdisp.hpp"
 #include "../../sf3500/sf3500_mixer.hpp"
 
@@ -46,6 +47,46 @@ static void doExit(void)
 	exit(0);
 }
 
+/* Buttons act like SDL key events: the key flag is set once when a button goes
+ * down and cleared when it comes up, and in between it is left alone. The game
+ * clears a flag itself once it has acted on it (a tip advanced, a menu item
+ * chosen, a jump made), and that has to stick until the next press. Rewriting the
+ * flag from the held button every frame would undo that after one frame, so a
+ * single tap of A (several frames long at a fast frame rate) would skip through
+ * every tip.
+ *
+ * Which buttons make up each control comes from controls.txt (controls.c). A
+ * control can have several buttons; it counts as pressed while any of them is. */
+static unsigned int previousButtons;
+static int buttonsKnown;
+
+static void followControl(unsigned int jk, int control, int scancode)
+{
+	unsigned int mask = getControlButtons(control);
+	int now = (jk & mask) != 0, before = (previousButtons & mask) != 0;
+
+	if (now != before)
+	{
+		app.keyboard[scancode] = now;
+	}
+}
+
+/* The D-pad works the same way as a joystick's axis events: an axis is only set
+ * when its buttons change. The menus clear an axis once they have moved the
+ * cursor, and setting it again every frame while the pad is held would move the
+ * cursor once per frame. */
+static void followAxis(unsigned int jk, int negative, int positive, int axis)
+{
+	unsigned int mn = getControlButtons(negative), mp = getControlButtons(positive);
+	int now = (jk & mn) ? -32768 : (jk & mp) ? 32767 : 0;
+	int before = (previousButtons & mn) ? -32768 : (previousButtons & mp) ? 32767 : 0;
+
+	if (now != before)
+	{
+		app.joypadAxis[axis] = now;
+	}
+}
+
 void doInput(void)
 {
 	unsigned int jk;
@@ -58,12 +99,23 @@ void doInput(void)
 		doExit();
 	}
 
-	app.joypadAxis[JOYPAD_AXIS_X] = (jk & (1<<JK_LEFT)) ? -32768 : (jk & (1<<JK_RIGHT)) ? 32767 : 0;
-	app.joypadAxis[JOYPAD_AXIS_Y] = (jk & (1<<JK_UP)) ? -32768 : (jk & (1<<JK_DOWN)) ? 32767 : 0;
+	/* A button already held when the game starts (the one that launched it) is
+	 * not a press. */
+	if (!buttonsKnown)
+	{
+		previousButtons = jk;
+		buttonsKnown = 1;
+	}
 
-	app.keyboard[SC_JUMP]    = (jk & (1<<JK_A)) != 0;
-	app.keyboard[SC_USE]     = (jk & (1<<JK_B)) != 0;
-	app.keyboard[SC_CLONE]   = (jk & (1<<JK_X)) != 0;
-	app.keyboard[SC_RESTART] = (jk & (1<<JK_Y)) != 0;
-	app.keyboard[SC_PAUSE]   = (jk & (1<<JK_START)) != 0;
+	followAxis(jk, CONTROL_LEFT, CONTROL_RIGHT, JOYPAD_AXIS_X);
+	followAxis(jk, CONTROL_UP, CONTROL_DOWN, JOYPAD_AXIS_Y);
+
+	followControl(jk, CONTROL_JUMP, SC_JUMP);
+	followControl(jk, CONTROL_USE, SC_USE);
+	followControl(jk, CONTROL_CLONE, SC_CLONE);
+	followControl(jk, CONTROL_RESTART, SC_RESTART);
+	followControl(jk, CONTROL_PAUSE, SC_PAUSE);
+	followControl(jk, CONTROL_MAX, SDL_SCANCODE_RETURN);	/* "accept": menus and tips */
+
+	previousButtons = jk;
 }

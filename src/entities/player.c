@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "player.h"
 
+static int jumpArmed = 1;
+
 static void recordCloneData(void);
 static void tick(void);
 static void die(void);
@@ -131,8 +133,19 @@ static void tick(void)
 			self->facing = FACING_RIGHT;
 		}
 
-		if (isControl(CONTROL_JUMP) && self->isOnGround && p->equipment != EQ_MANHOLE_COVER)
+		/* Holding the jump button down used to make Walter jump again the moment he
+		 * landed. On a handheld the button is often held for a while, so by default
+		 * a jump needs a fresh press (one that was started while still in the air
+		 * counts when he lands). WC_JUMP_REPEAT=1 brings back the original. */
+		if (!isControl(CONTROL_JUMP))
 		{
+			jumpArmed = 1;
+		}
+
+		if (isControl(CONTROL_JUMP) && self->isOnGround && p->equipment != EQ_MANHOLE_COVER && (jumpArmed || wcEnvInt("WC_JUMP_REPEAT", 0)))
+		{
+			jumpArmed = 0;
+
 			self->riding = NULL;
 
 			self->dy = -20;

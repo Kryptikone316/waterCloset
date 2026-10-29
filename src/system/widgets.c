@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "widgets.h"
+extern const char *getControlLabel(int control);
 
 static void loadAllWidgets(void);
 static void loadWidgets(const char *filename);
@@ -138,9 +139,9 @@ static void changeWidgetValue(int dir)
 
 static void doInputWidget(void)
 {
-	app.awaitingWidgetInput = 1;
-
-	app.lastKeyPressed = app.lastButtonPressed = -1;
+	/* The handheld's buttons are fixed (input.c): there is no keyboard to press a
+	 * new key on, so waiting for one would lock the screen. The list is read-only. */
+	playSound(SND_NEGATIVE, CH_WIDGET);
 }
 
 static void findNextWidget(const char *groupName, int dir)
@@ -309,7 +310,7 @@ Widget *getWidget(const char *name, const char *groupName)
 
 void updateControlWidget(Widget *w, int c)
 {
-	sprintf(w->options[0], "%s", SDL_GetScancodeName(app.config.keyControls[c]));
+	sprintf(w->options[0], "%s", getControlLabel(c));
 
 	if (app.config.joypadControls[c] != -1)
 	{

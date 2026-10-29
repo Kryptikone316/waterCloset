@@ -7,7 +7,7 @@
 enum {
     JK_LEFT, JK_RIGHT, JK_UP, JK_DOWN,
     JK_A, JK_B, JK_L1, JK_R1, JK_X, JK_Y,
-    JK_START, JK_SELECT, JK_COUNT
+    JK_START, JK_SELECT, JK_L2, JK_R2, JK_COUNT
 };
 
 #ifdef __cplusplus
