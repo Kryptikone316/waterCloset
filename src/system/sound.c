@@ -34,6 +34,39 @@ static char *musicFilenames[] = {
 };
 static int lastRandomMusic;
 static int channelVolumes[CH_MAX];
+/* The voice last started on each channel. Upstream clears channelVolumes[c] in a
+ * Mix_ChannelFinished callback when the channel's sound ends; this mixer has no
+ * such callback, so the record is cleared instead when that voice is found to
+ * have stopped. Without it the first positional sound on a channel left its
+ * value behind for good, and nearer sounds on that channel were silenced from
+ * then on. */
+static Sf3500Voice *channelVoice[CH_MAX];
+static int channelSound[CH_MAX];
+
+/* Each sound has a few voices sharing one sample, so a sound that is triggered
+ * again while it is still playing (coins picked up in a row) plays again on top
+ * instead of cutting itself off or being skipped. */
+#define SND_INSTANCES 3
+static Sf3500Voice *soundInstances[SND_MAX][SND_INSTANCES];
+static int nextInstance[SND_MAX];
+
+static Sf3500Voice *pickInstance(int id)
+{
+	int i;
+
+	for (i = 0 ; i < SND_INSTANCES ; i++)
+	{
+		if (soundInstances[id][i] && !sf3500_voice_playing(soundInstances[id][i]))
+		{
+			return soundInstances[id][i];
+		}
+	}
+
+	/* all busy: restart the oldest */
+	nextInstance[id] = (nextInstance[id] + 1) % SND_INSTANCES;
+
+	return soundInstances[id][nextInstance[id]];
+}
 static float sfxVolume = 1.0f;
 static float musicVolumeGain = 1.0f;
 
@@ -134,10 +167,27 @@ void initSounds(void)
 
 	loadSounds();
 
+	for (i = 0 ; i < SND_MAX ; i++)
+	{
+		int n;
+
+		if (sounds[i])
+		{
+			soundInstances[i][0] = sounds[i];
+
+			for (n = 1 ; n < SND_INSTANCES ; n++)
+			{
+				soundInstances[i][n] = sf3500_voice_clone_static(sounds[i]);
+			}
+		}
+	}
+
 	musicVoice = sf3500_voice_create_stream(musicFill, NULL, 48000, 2);
 
 	setSoundVolume(app.config.soundVolume);
 	setMusicVolume(app.config.musicVolume);
+
+	fprintf(stderr, "volume: sound %d, music %d (in-game settings; 100 = full)\n", app.config.soundVolume, app.config.musicVolume);
 
 	for (i = 0 ; i < CH_MAX ; i++)
 	{
@@ -162,18 +212,52 @@ void loadMusic(char *filename)
 
 	path = getFileLocation(filename);
 
+	/* An optional music_pack folder next to the game holds replacement tracks with
+	 * the same file names (see music_pack/README.txt). A track found there is used
+	 * instead of the one that came with the game. */
+	{
+		static char packPath[MAX_FILENAME_LENGTH];
+		const char *base = strrchr(filename, '/');
+		FILE *f;
+
+		snprintf(packPath, sizeof(packPath), "music_pack/%s", base ? base + 1 : filename);
+
+		f = fopen(packPath, "rb");
+
+		if (f)
+		{
+			fclose(f);
+			path = packPath;
+		}
+	}
+
+	fprintf(stderr, "music: loading %s\n", path);
+
 	musicVorbis = stb_vorbis_open_filename(path, NULL, NULL);
 
 	if (musicVorbis)
 	{
 		stb_vorbis_info info = stb_vorbis_get_info(musicVorbis);
-		musicChannels = info.channels;
+
+		musicChannels = info.channels == 1 ? 1 : 2;
+
+		fprintf(stderr, "music: %d Hz, %d channel(s)\n", info.sample_rate, info.channels);
+
+		/* tell the mixer what the track really is so that it converts it to the
+		 * output rate (the tracks are 44100 Hz; the output is 48000 Hz) */
+		sf3500_voice_set_stream_format(musicVoice, info.sample_rate, musicChannels);
 	}
 }
 
 void playMusic(int loop)
 {
 	(void)loop; /* always looping - see musicFill's own comment */
+
+	/* music=0 in watercloset.txt leaves the music off (WC_MUSIC=0) */
+	if (wcEnvInt("WC_MUSIC", 1) == 0)
+	{
+		return;
+	}
 
 	if (musicVoice)
 	{
@@ -183,13 +267,17 @@ void playMusic(int loop)
 
 void playSound(int id, int channel)
 {
+	Sf3500Voice *v;
+
 	(void)channel;
 
 	if (sounds[id])
 	{
-		sf3500_voice_set_relative(sounds[id], 1);
-		sf3500_voice_set_gain(sounds[id], sfxVolume);
-		sf3500_voice_play(sounds[id]);
+		v = pickInstance(id);
+
+		sf3500_voice_set_relative(v, 1);
+		sf3500_voice_set_gain(v, sfxVolume);
+		sf3500_voice_play(v);
 	}
 }
 
@@ -203,6 +291,7 @@ void playSound(int id, int channel)
 void playPositionalSound(int id, int channel, int srcX, int srcY, int destX, int destY)
 {
 	float distance, vol;
+	Sf3500Voice *v;
 
 	(void)srcY; (void)destY;
 
@@ -214,15 +303,27 @@ void playPositionalSound(int id, int channel, int srcX, int srcY, int destX, int
 		vol /= SCREEN_WIDTH;
 		vol *= distance;
 
-		if (vol >= channelVolumes[channel] && sounds[id])
+		if (channelVoice[channel] && !sf3500_voice_playing(channelVoice[channel]))
 		{
+			channelVolumes[channel] = 0;
+			channelVoice[channel] = NULL;
+		}
+
+		/* The same sound again always plays (the next coin in a row); the
+		 * "don't steal a louder channel" check is only for a different sound. */
+		if (sounds[id] && (vol >= channelVolumes[channel] || (channelVoice[channel] && channelSound[channel] == id)))
+		{
+			v = pickInstance(id);
+
 			channelVolumes[channel] = (int)vol;
+			channelVoice[channel] = v;
+			channelSound[channel] = id;
 
 			sf3500_mixer_set_listener_x((float)destX);
-			sf3500_voice_set_relative(sounds[id], 0);
-			sf3500_voice_set_x(sounds[id], (float)srcX);
-			sf3500_voice_set_gain(sounds[id], ((255.0f - vol) / 255.0f) * sfxVolume);
-			sf3500_voice_play(sounds[id]);
+			sf3500_voice_set_relative(v, 0);
+			sf3500_voice_set_x(v, (float)srcX);
+			sf3500_voice_set_gain(v, ((255.0f - vol) / 255.0f) * sfxVolume);
+			sf3500_voice_play(v);
 		}
 	}
 }
@@ -290,13 +391,16 @@ void loadRandomStageMusic(void)
 
 void destroySounds(void)
 {
-	int i;
+	int i, n;
 
 	for (i = 0 ; i < SND_MAX ; i++)
 	{
-		if (sounds[i])
+		for (n = 0 ; n < SND_INSTANCES ; n++)
 		{
-			sf3500_voice_destroy(sounds[i]);
+			if (soundInstances[i][n])
+			{
+				sf3500_voice_destroy(soundInstances[i][n]);
+			}
 		}
 	}
 

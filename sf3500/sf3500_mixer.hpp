@@ -61,6 +61,7 @@ void sf3500_mixer_set_listener_x(float x);
 /* `pcm` must stay valid for the voice's entire lifetime (caller-owned, not
  * copied) and must already be 48000Hz interleaved stereo S16. */
 Sf3500Voice *sf3500_voice_create_static(const short *pcm, int frames);
+Sf3500Voice *sf3500_voice_clone_static(Sf3500Voice *v);
 
 /* `fill` is invoked from the mixer thread only; it owns all decode state. */
 Sf3500Voice *sf3500_voice_create_stream(Sf3500StreamFillFn fill, void *userdata,
@@ -88,6 +89,11 @@ void sf3500_voice_set_x(Sf3500Voice *v, float x);
  * restart isn't glued to stale resample phase). Has no effect on a static
  * voice (it has no position of its own, playback is driven by play/stop). */
 void sf3500_voice_reset_stream(Sf3500Voice *v);
+
+/* Tells a stream voice what the fill callback delivers (sample rate in Hz and 1 or
+ * 2 channels) and starts it from an empty buffer. The mixer converts the rate to the
+ * output's. */
+void sf3500_voice_set_stream_format(Sf3500Voice *v, int native_rate, int native_channels);
 
 #ifdef __cplusplus
 }
