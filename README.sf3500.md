@@ -36,7 +36,8 @@ The game's rules, levels and data are upstream's. The commits on top of the tag 
    of key names, and the Controls screen in Options is read-only. Each jump needs a fresh press
    unless `jump_repeat=1`.
 7. **Frame limit, settings and timing.** The game does one logic step per frame, so the frame rate
-   is the game speed: `fps` sets it (default 50 on this device). Other settings are read from the
+   is the game speed: `fps` sets it (default 60, the designed speed), and `draw_every` (default 2 on this device) draws a
+   picture only every 2nd frame while the logic and buttons keep the full rate, which keeps the speed up in the busier stages. Other settings are read from the
    environment, which `run.sh` fills from `watercloset.txt`. A timing and audio line is written to
    the log every 120 frames.
 8. This file.
