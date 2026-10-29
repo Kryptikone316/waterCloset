@@ -127,11 +127,23 @@ static Sf3500Voice *loadOggVoice(const char *filename)
 	short *decoded;
 	int channels, rate, decodedSamples;
 	SDL_AudioCVT cvt;
-	int frames;
+	int frames, attempt;
 
 	path = getFileLocation((char *)filename);
 
 	decodedSamples = stb_vorbis_decode_filename(path, &channels, &rate, &decoded);
+
+	/* Now and then a sound fails to load at start-up for no lasting reason (a different
+	 * one each time, the file itself is fine), which left that sound silent for the
+	 * whole session. Try again a few times before giving up. */
+	for (attempt = 1 ; (decodedSamples <= 0 || !decoded) && attempt < 4 ; attempt++)
+	{
+		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, "retrying '%s' (attempt %d)", path, attempt + 1);
+
+		SDL_Delay(50);
+
+		decodedSamples = stb_vorbis_decode_filename(path, &channels, &rate, &decoded);
+	}
 
 	if (decodedSamples <= 0 || !decoded)
 	{
