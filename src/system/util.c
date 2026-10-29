@@ -105,3 +105,16 @@ int getJSONIntVal(cJSON *root, char *name, int defaultValue)
 
 	return defaultValue;
 }
+
+/* Integer setting from the environment (set by run.sh from watercloset.txt). */
+int wcEnvInt(const char *name, int def)
+{
+	const char *v = getenv(name);
+
+	if (v && *v)
+	{
+		return atoi(v);
+	}
+
+	return def;
+}
