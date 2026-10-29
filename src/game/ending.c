@@ -101,7 +101,7 @@ static void drawDarkness(void)
 
 	dest.y += 150;
 
-	SDL_RenderCopyEx(app.renderer, darknessTexture->texture, &darknessTexture->rect, &dest, 0, NULL, SDL_FLIP_NONE);
+	SDL_RenderCopyEx(app.renderer, darknessTexture->texture, &darknessTexture->half, &dest, 0, NULL, SDL_FLIP_NONE);
 }
 
 static void focusOnVomit(void)

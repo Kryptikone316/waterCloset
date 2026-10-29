@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "particles.h"
 
+extern void blitGlow(AtlasImage *atlasImage, int x, int y, int center, int r, int g, int b, int a);
+
 static Particle *spawnParticle(void);
 
 static AtlasImage *basicTexture;
@@ -63,17 +65,23 @@ void doParticles(void)
 
 void drawParticles(void)
 {
+	static int particlesOn = -1;
 	Particle *p;
+
+	if (particlesOn < 0)
+	{
+		particlesOn = wcEnvInt("WC_PARTICLES", 1);
+	}
+
+	if (!particlesOn)
+	{
+		return;
+	}
 
 	for (p = stage.particleHead.next ; p != NULL ; p = p->next)
 	{
-		SDL_SetTextureColorMod(p->atlasImage->texture, p->color.r, p->color.g, p->color.b);
-
-		blitAtlasImage(p->atlasImage, p->x - stage.camera.x, p->y - stage.camera.y, 1, SDL_FLIP_NONE);
+		blitGlow(p->atlasImage, p->x - stage.camera.x, p->y - stage.camera.y, 1, p->color.r, p->color.g, p->color.b, 255);
 	}
-
-	/* restore colour */
-	SDL_SetTextureColorMod(basicTexture->texture, 255, 255, 255);
 }
 
 void addCoinParticles(int x, int y)

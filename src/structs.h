@@ -53,6 +53,20 @@ struct AtlasImage {
 	char filename[MAX_DESCRIPTION_LENGTH];
 	SDL_Texture *texture;
 	SDL_Rect rect;
+	/* SF3500: the same image at half size, in a second (half-size) atlas texture,
+	 * so drawing it onto the half-size screen is a plain 1:1 copy. See atlas.c. */
+	SDL_Texture *halfTexture;
+	SDL_Rect half;
+	/* Fully opaque map tiles are also kept as RGB565 pixels (same rectangle) and
+	 * copied straight onto the screen surface, which is much cheaper than a
+	 * renderer blend. NULL for everything else. */
+	SDL_Surface *directSurface;
+	/* Glow images (gfx/particles/): a small ARGB copy of the half-size picture
+	 * for blitGlow(), which tints and blends it without SDL's slow path. */
+	SDL_Surface *glowSurface;
+	/* Mirrored copies of the half-size image (zero width if not made), drawn
+	 * with a plain copy instead of SDL's flipped-copy call; see atlas.c. */
+	SDL_Rect halfFlipH, halfFlipV;
 	AtlasImage *next;
 };
 

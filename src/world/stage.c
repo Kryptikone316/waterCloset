@@ -49,6 +49,8 @@ static SDL_Color getColorForItems(int current, int total);
 static cJSON *stageJSON;
 static int cloneWarning;
 static int showTips;
+static int tipsFrameKey = -1;
+static int menuFrameKey = -1;
 static int tipIndex;
 static int numTips;
 static int show;
@@ -110,6 +112,10 @@ void loadStage(int randomTiles)
 	char filename[MAX_FILENAME_LENGTH];
 
 	srand(256 * stage.num);
+
+	fprintf(stderr, "stage: %d\n", stage.num);
+
+	tipsFrameKey = menuFrameKey = -1;
 
 	sprintf(filename, "data/stages/%03d.json", stage.num);
 
@@ -383,8 +389,67 @@ static void resetStage(void)
 	resetClones();
 }
 
+/* While a tip is up the game is paused, so the picture does not change from one
+ * frame to the next. Drawing it again (the scene, the dimming and the text box
+ * make this the slowest screen in the game) just writes the same pixels, so once
+ * a tip has been drawn the frame is left as it is and only shown again. */
+static int wipeBusy(void)
+{
+	switch (app.wipe.type)
+	{
+		case WIPE_FADE:
+			return app.wipe.value > 0;
+
+		case WIPE_IN:
+		case WIPE_OUT:
+			return app.wipe.value < SCREEN_WIDTH;
+
+		default:
+			return 0;
+	}
+}
+
 static void draw(void)
 {
+	if (show != SHOW_MENU && showTips && !wipeBusy())
+	{
+		int key = stage.num * 64 + tipIndex;
+
+		if (key == tipsFrameKey)
+		{
+			markFullFill();
+
+			return;
+		}
+
+		tipsFrameKey = key;
+	}
+	else
+	{
+		tipsFrameKey = -1;
+	}
+
+	/* The pause menu is the same: the game behind it is stopped, and the only
+	 * things that change are which entry is selected and the half-second blink
+	 * of its marker, so the frame is only drawn again when one of them does. */
+	if (show == SHOW_MENU && !wipeBusy())
+	{
+		int key = ((int)(((intptr_t)app.selectedWidget >> 4) & 0xFFFFFF) << 1) | (SDL_GetTicks() % 1000 < 500);
+
+		if (key == menuFrameKey)
+		{
+			markFullFill();
+
+			return;
+		}
+
+		menuFrameKey = key;
+	}
+	else
+	{
+		menuFrameKey = -1;
+	}
+
 	switch (show)
 	{
 		case SHOW_MENU:
@@ -403,7 +468,12 @@ static void drawGame()
 {
 	app.dev.drawing = 0;
 
-	drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 64, 64, 64, 64);
+	/* Upstream drew a translucent grey (64,64,64 at alpha 64) over the black
+	 * frame here, which is (16,16,16): paint that colour directly instead of
+	 * blending a full screen of pixels every frame (very slow on this device). */
+	drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 16, 16, 16, 255);
+
+	markFullFill();
 
 	drawBackground();
 
@@ -437,7 +507,18 @@ static void drawMenu()
 /* draws a parallax background */
 static void drawBackground(void)
 {
+	static int backgroundOn = -1;
 	int x, y, x1, x2, y1, y2, mx, my, camX;
+
+	if (backgroundOn < 0)
+	{
+		backgroundOn = wcEnvInt("WC_BACKGROUND", 1);
+	}
+
+	if (!backgroundOn)
+	{
+		return;
+	}
 
 	camX = stage.camera.x * 0.5f;
 
@@ -664,6 +745,9 @@ static void restart(void)
 
 static void returnFrom(void)
 {
+	/* another screen has been drawing; the stage must draw itself again */
+	tipsFrameKey = menuFrameKey = -1;
+
 	showWidgets("stage", 1);
 
 	calculateWidgetFrame("stage");

@@ -26,6 +26,8 @@ static void moveToWorld(Entity *e, float dx, float dy);
 static void moveToEntities(Entity *e, float dx, float dy);
 static void loadEnts(cJSON *root);
 static int canPush(Entity *e, Entity *other);
+extern void blitGlow(AtlasImage *atlasImage, int x, int y, int center, int r, int g, int b, int a);
+
 static void drawEntityLight(Entity *e);
 
 static Entity deadListHead, *deadListTail;
@@ -426,20 +428,25 @@ void drawEntities(int background)
 
 static void drawEntityLight(Entity *e)
 {
+	static int lightsOn = -1;
 	int x, y;
+
+	if (lightsOn < 0)
+	{
+		lightsOn = wcEnvInt("WC_LIGHTS", 1);
+	}
+
+	if (!lightsOn)
+	{
+		return;
+	}
 
 	if (e->light.a > 0)
 	{
 		x =  e->x + (e->w / 2) + e->light.x - stage.camera.x;
 		y =  e->y + (e->h / 2) + e->light.y - stage.camera.y;
 
-		SDL_SetTextureColorMod(sparkleTexture->texture, e->light.r, e->light.g, e->light.b);
-		SDL_SetTextureAlphaMod(sparkleTexture->texture, e->light.a);
-
-		blitAtlasImage(sparkleTexture, x, y, 1, SDL_FLIP_NONE);
-
-		SDL_SetTextureColorMod(sparkleTexture->texture, 255, 255, 255);
-		SDL_SetTextureAlphaMod(sparkleTexture->texture, 255);
+		blitGlow(sparkleTexture, x, y, 1, e->light.r, e->light.g, e->light.b, e->light.a);
 	}
 }
 

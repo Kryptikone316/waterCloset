@@ -55,7 +55,7 @@ void initSDL(void)
 	 * back to software anyway, just via a much slower SDL_RenderReadPixels
 	 * round-trip at present time instead of a direct pointer read).
 	 *
-	 * The owned surface is physically 640x360 (HW_PHYS_W/H, draw.c), not
+	 * The owned surface is the device's whole 640x480 RGB565 canvas (HW_PHYS_W/H), not
 	 * SCREEN_WIDTH x SCREEN_HEIGHT - SDL_RenderSetLogicalSize makes the
 	 * renderer transparently scale every draw call from the game's 1280x720
 	 * logical coordinate space down onto this smaller physical surface, the
@@ -64,7 +64,7 @@ void initSDL(void)
 	 * on this GPU-less device - unlike a downscale applied only at the
 	 * final present step, every individual tile/entity blit is now cheaper,
 	 * not just the one full-frame copy at the end. */
-	app.hwSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, HW_PHYS_W, HW_PHYS_H, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0);
+	app.hwSurface = SDL_CreateRGBSurfaceWithFormat(0, HW_PHYS_W, HW_PHYS_H, 16, SDL_PIXELFORMAT_RGB565);
 	app.renderer = SDL_CreateSoftwareRenderer(app.hwSurface);
 	SDL_RenderSetLogicalSize(app.renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
