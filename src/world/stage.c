@@ -565,7 +565,26 @@ static void drawTips(void)
 
 	app.text.wrap = r.w - 25;
 
-	drawText(r.x + 10, r.y, 32, TEXT_LEFT, app.colors.white, "%s", stage.tips[tipIndex]);
+	{
+		/* the room above the prompt line; a long tip is drawn smaller to fit it */
+		int tipSize = 32, lh, lines;
+
+		for (;;)
+		{
+			lines = textLineCount(stage.tips[tipIndex], tipSize, r.w - 25, &lh);
+
+			if (tipSize <= 20 || lines * lh <= r.h - 32 - 10)
+			{
+				break;
+			}
+
+			tipSize -= 2;
+		}
+
+		app.text.wrap = r.w - 25;
+
+		drawText(r.x + 10, r.y, tipSize, TEXT_LEFT, app.colors.white, "%s", stage.tips[tipIndex]);
+	}
 
 	{
 		char counter[64];

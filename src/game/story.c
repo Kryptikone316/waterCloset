@@ -71,7 +71,25 @@ static void draw(void)
 
 	drawTextFit(SCREEN_WIDTH / 2, 25, 64, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("story.title", "The Story!"));
 
-	drawText(100, 100, 40, TEXT_LEFT, app.colors.white, text);
+	{
+		int storySize = 40, lh, lines;
+
+		for (;;)
+		{
+			lines = textLineCount(text, storySize, SCREEN_WIDTH - 200, &lh);
+
+			if (storySize <= 24 || lines * lh <= 470)
+			{
+				break;
+			}
+
+			storySize -= 2;
+		}
+
+		app.text.wrap = SCREEN_WIDTH - 200;
+
+		drawText(100, 100, storySize, TEXT_LEFT, app.colors.white, "%s", text);
+	}
 
 	drawWidgetFrame();
 

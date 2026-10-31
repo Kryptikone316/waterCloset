@@ -188,13 +188,21 @@ static void drawStages(void)
 
 			if (s->coins)
 			{
+				char coinText[32];
+				int cw, ch, tickX;
+
+				/* the tick follows the numbers, whatever width the font gives them */
+				snprintf(coinText, sizeof(coinText), "%02d / %02d", s->coinsFound, s->coins);
+				calcTextDimensions(coinText, 48, &cw, &ch);
+				tickX = MAX(r.x + 385, r.x + (r.w / 2) - 48 + cw + 8);
+
 				if (s->coinsFound == s->coins)
 				{
-					blitAtlasImage(tick, r.x + 385, y + 13, 0, SDL_FLIP_NONE);
+					blitAtlasImage(tick, tickX, y + 13, 0, SDL_FLIP_NONE);
 				}
 				else
 				{
-					blitAtlasImage(noTick, r.x + 385, y + 13, 0, SDL_FLIP_NONE);
+					blitAtlasImage(noTick, tickX, y + 13, 0, SDL_FLIP_NONE);
 				}
 			}
 

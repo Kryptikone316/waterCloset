@@ -37,6 +37,7 @@ static int cachedLinesMode;
 static SDL_Color cachedLinesColor;
 static float scale;
 static int ignoreColors;
+static int dryRun, dryLines;              /* textLineCount() runs the line breaking without drawing */
 static SDL_Color prevColor;
 static SDL_Rect glyphs[128];
 static SDL_Texture *fontTexture;
@@ -190,7 +191,7 @@ static HalfFont halfFonts[MAX_HALF_FONTS];
 static int numHalfFonts;
 static HalfFont *currentHalf;
 static char fontPath[512];
-static int fontBold;                     /* the fallback font is thin: drawn emboldened */
+static int fontBold = 1;                 /* text is drawn emboldened: the small screen needs the weight (WC_BOLD=0 turns it off) */
 static int fontScale = 100;              /* percent: the fallback font is scaled to the height of the game's own */
 
 static int pointSize(int n)
@@ -512,6 +513,8 @@ void initFonts(void)
 
 	STRNCPY(fontPath, getFileLocation("fonts/EnterCommand.ttf"), sizeof(fontPath));
 
+	fontBold = getenv("WC_BOLD") ? atoi(getenv("WC_BOLD")) : 1;
+
 	/* The game's own font has no Cyrillic, Chinese or Japanese. When a language needs
 	 * more than it can draw, the whole game uses TreeFrogUI's Unicode font instead, so
 	 * letters from two fonts are never mixed. */
@@ -537,8 +540,6 @@ void initFonts(void)
 			if (b) TTF_CloseFont(b);
 
 			STRNCPY(fontPath, fallback, sizeof(fontPath));
-
-			fontBold = getenv("WC_FALLBACK_BOLD") ? atoi(getenv("WC_FALLBACK_BOLD")) : 1;
 		}
 
 		/* no font can draw this language: it is shown in English rather than as boxes */
@@ -618,6 +619,31 @@ static void initFont(char *filename)
 	layoutFont = font;                   /* kept: it measures the characters outside ASCII */
 
 	fontTexture = toTexture(surface, 1);
+}
+
+/* How many lines wrapped text takes, and how tall that is, without drawing it. */
+int textLineCount(const char *text, int size, int wrap, int *lineHeight)
+{
+	int savedWrap = app.text.wrap, w, h;
+
+	snprintf(drawTextBuffer, sizeof(drawTextBuffer), "%s", text);
+
+	translateKeyNames(drawTextBuffer, sizeof(drawTextBuffer));
+
+	app.text.wrap = wrap;
+	dryRun = 1;
+	dryLines = 0;
+
+	drawTextLines(0, 0, size, TEXT_LEFT);
+
+	dryRun = 0;
+	app.text.wrap = savedWrap;
+
+	calcTextDimensions("Ag", size, &w, &h);
+
+	*lineHeight = h * 6 / 5;
+
+	return dryLines;
 }
 
 /* Draws one line of finished text no wider than maxWidth: a longer translation is drawn
@@ -762,7 +788,11 @@ static void drawTextLines(int x, int y, int size, int align)
 
 			if (currentWidth + w > app.text.wrap)
 			{
-				if (cachedLinesMode)
+				if (dryRun)
+				{
+					dryLines++;
+				}
+				else if (cachedLinesMode)
 				{
 					drawCachedLine(line, x, y, size, align, cachedLinesColor);
 				}
@@ -790,7 +820,11 @@ static void drawTextLines(int x, int y, int size, int align)
 
 	(void)len;
 
-	if (cachedLinesMode)
+	if (dryRun)
+	{
+		dryLines++;
+	}
+	else if (cachedLinesMode)
 	{
 		drawCachedLine(line, x, y, size, align, cachedLinesColor);
 	}

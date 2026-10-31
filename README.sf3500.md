@@ -51,7 +51,9 @@ The game's rules, levels and data are upstream's. The commits on top of the tag 
    TreeFrogUI's `TreeFrogUnicode.ttf` (`WC_FALLBACK_FONT` to point elsewhere), scaled to the height of
    the game's own, and if that file is missing the game stays in English. Text that has to fit a
    space (the HUD, the tips panel, headings and hints) is drawn a little smaller when a translation
-   is too long (`drawTextFit`). `tools/langs.py --check` checks every pack against the master:
+   is too long (`drawTextFit`), and tips and the story are drawn smaller when they would not fit their
+   panel (`textLineCount`). All text is drawn bold (SDL_ttf's bold style): the game's own font is thin at
+   half size on this screen, and the fallback font much more so; `WC_BOLD=0` gives back the original look. `tools/langs.py --check` checks every pack against the master:
    no invented keys, and the same format codes (`%d`, `%s`) and `[Button]` names in each string.
 9. This file.
 
