@@ -40,7 +40,20 @@ The game's rules, levels and data are upstream's. The commits on top of the tag 
    picture only every 2nd frame while the logic and buttons keep the full rate, which keeps the speed up in the busier stages. Other settings are read from the
    environment, which `run.sh` fills from `watercloset.txt`. A timing and audio line is written to
    the log every 120 frames.
-8. This file.
+8. **Translations.** Everything the game shows goes through `tr("key", "English")` (`src/system/lang.c`).
+   `lang/en_US.json` is the master list of every string (made by `tools/langs.py` from the source and
+   the data files), and `lang/<locale>.json` holds a translation; a string a pack does not have stays
+   English. The language is `WC_LANG` (`run.sh` takes it from TreeFrogUI's `language=` setting); with it
+   unset, or set to `en_US`, the game is English and reads no language file. Text is UTF-8: ASCII keeps its
+   original fast glyph table, and any other character is drawn on first use (`src/system/text.c`), so
+   accents work and lines of Chinese or Japanese break between characters. The game's own font draws the
+   Latin languages; for any language it cannot draw (Russian, Japanese, Chinese) the whole game uses
+   TreeFrogUI's `TreeFrogUnicode.ttf` (`WC_FALLBACK_FONT` to point elsewhere), scaled to the height of
+   the game's own, and if that file is missing the game stays in English. Text that has to fit a
+   space (the HUD, the tips panel, headings and hints) is drawn a little smaller when a translation
+   is too long (`drawTextFit`). `tools/langs.py --check` checks every pack against the master:
+   no invented keys, and the same format codes (`%d`, `%s`) and `[Button]` names in each string.
+9. This file.
 
 ## Controls (SF3500)
 
@@ -52,8 +65,8 @@ these can be changed in `controls.txt` (action=BUTTON, e.g. `jump=L1`); see the 
 
 All read by `run.sh` from `watercloset.txt` into `WC_*` environment variables: `fps`, `draw_every`,
 `lights`, `particles`, `background`, `sharpness`, `saturation`, `contrast`, `nice`, `music`,
-`audio_lead`, `jump_repeat`, `perf_log`. `WC_CONTROLS` overrides the path of `controls.txt` (for
-testing on a PC).
+`audio_lead`, `jump_repeat`, `perf_log`; `language` (`auto`, the default, follows TreeFrogUI; or a locale such as
+`de_DE`) is read the same way. `WC_CONTROLS` overrides the path of `controls.txt` (for testing on a PC).
 
 ## Building
 
@@ -75,3 +88,10 @@ in that list: `25879__acclivity__drip1.ogg` is CC BY-NC 4.0 (freesound.org, accl
 `plunge.ogg` is not stated. `mortice_key_drop_on_concrete_floor.ogg` is credited only as
 "Copyright www.freesfx.co.uk". Note that `legalcode.txt` is the CC BY-NC-SA 4.0 text while the
 README and the in-game credits say 3.0.
+
+The files in `lang/` are translations of the game's text (tips, story, menus), which is part of
+`data`, so they are under the same licence: Creative Commons BY-NC-SA 3.0, copyright Parallel Realities
+for the original text. The ten translations (German, Spanish, French, Italian, Polish, Brazilian
+Portuguese, Russian, Turkish, Japanese, Simplified Chinese) are drafts written by Claude and not yet
+reviewed by native speakers; each file says so in its `_translation_note`. Corrections are welcome and
+need no rebuild: they are plain JSON files.
