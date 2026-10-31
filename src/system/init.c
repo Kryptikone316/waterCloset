@@ -85,6 +85,7 @@ void initGame(void)
 	void (*initFuncs[]) (void) = {
 		initLookups,
 		initAtlas,
+		initLang,
 		initFonts,
 		initSounds,
 		initWidgets,

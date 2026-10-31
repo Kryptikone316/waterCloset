@@ -565,11 +565,33 @@ static void drawTips(void)
 
 	app.text.wrap = r.w - 25;
 
-	drawText(r.x + 10, r.y, 32, TEXT_LEFT, app.colors.white, stage.tips[tipIndex]);
+	drawText(r.x + 10, r.y, 32, TEXT_LEFT, app.colors.white, "%s", stage.tips[tipIndex]);
 
-	drawText(r.x + 10, r.y + r.h - 32, 32, TEXT_LEFT, app.colors.white, "Press [Return] to continue");
+	{
+		char counter[64];
+		int cw, ch;
 
-	drawText(r.x + r.w - 10, r.y + r.h - 32, 32, TEXT_RIGHT, app.colors.white, "Tip %d / %d", tipIndex + 1, numTips);
+		snprintf(counter, sizeof(counter), tr("stage.tip_counter", "Tip %d / %d"), tipIndex + 1, numTips);
+
+		calcTextDimensions(counter, 32, &cw, &ch);
+
+		/* the prompt takes the room the counter leaves it */
+		drawTextFit(r.x + 10, r.y + r.h - 32, 32, TEXT_LEFT, app.colors.white, r.w - cw - 40, tr("stage.continue", "Press [Return] to continue"));
+
+		drawText(r.x + r.w - 10, r.y + r.h - 32, 32, TEXT_RIGHT, app.colors.white, "%s", counter);
+	}
+}
+
+static void hudText(int x, int align, SDL_Color color, int maxWidth, const char *format, ...)
+{
+	char buf[256];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	drawTextFit(x, 0, 32, align, color, maxWidth, buf);
 }
 
 static void drawHud(void)
@@ -578,45 +600,55 @@ static void drawHud(void)
 
 	drawRect(0, 0, SCREEN_WIDTH, 30, 0, 0, 0, 192);
 
-	drawText(10, 0, 32, TEXT_LEFT, app.colors.white, "Stage: %03d", stage.num);
-
-	if (numTips > 0)
 	{
-		blitAtlasImage(tipsPrompt, 135, 16, 1, SDL_FLIP_NONE);
+		char label[64];
+		int lw, lh;
+
+		snprintf(label, sizeof(label), tr("hud.stage", "Stage: %03d"), stage.num);
+
+		calcTextDimensions(label, 32, &lw, &lh);
+
+		hudText(10, TEXT_LEFT, app.colors.white, 200, "%s", label);
+
+		if (numTips > 0)
+		{
+			/* the tips icon follows the label, which is longer in some languages */
+			blitAtlasImage(tipsPrompt, MAX(135, MIN(lw, 200) + 35), 16, 1, SDL_FLIP_NONE);
+		}
 	}
 
 	if (cloneWarning > 0 && cloneWarning % 20 < 10)
 	{
-		drawText(256, 0, 32, TEXT_LEFT, app.colors.red, "Clones: %d / %d", stage.clones, stage.cloneLimit);
+		hudText(256, TEXT_LEFT, app.colors.red, 200, tr("hud.clones", "Clones: %d / %d"), stage.clones, stage.cloneLimit);
 	}
 	else
 	{
-		drawText(256, 0, 32, TEXT_LEFT, stage.cloneLimit > 0 ? app.colors.white : app.colors.darkGrey, "Clones: %d / %d", stage.clones, stage.cloneLimit);
+		hudText(256, TEXT_LEFT, stage.cloneLimit > 0 ? app.colors.white : app.colors.darkGrey, 200, tr("hud.clones", "Clones: %d / %d"), stage.clones, stage.cloneLimit);
 	}
 
-	drawText(512, 0, 32, TEXT_CENTER, stage.totalKeys > 0 ? app.colors.white : app.colors.darkGrey, "Keys: %d", stage.keys);
+	hudText(512, TEXT_CENTER, stage.totalKeys > 0 ? app.colors.white : app.colors.darkGrey, 160, tr("hud.keys", "Keys: %d"), stage.keys);
 
-	drawText(768, 0, 32, TEXT_CENTER, getColorForItems(stage.coins, stage.totalCoins), "Coins: %d / %d", stage.coins, stage.totalCoins);
+	hudText(768, TEXT_CENTER, getColorForItems(stage.coins, stage.totalCoins), 240, tr("hud.coins", "Coins: %d / %d"), stage.coins, stage.totalCoins);
 
-	drawText(1024, 0, 32, TEXT_CENTER, getColorForItems(stage.items, stage.totalItems), "Items: %d / %d", stage.items, stage.totalItems);
+	hudText(1024, TEXT_CENTER, getColorForItems(stage.items, stage.totalItems), 210, tr("hud.items", "Items: %d / %d"), stage.items, stage.totalItems);
 
 	s = (stage.time / 60) % 60;
 	m = stage.time / 3600;
 
 	if (m > 0 || s > 10 || stage.time % 30 < 15)
 	{
-		drawText(SCREEN_WIDTH - 10, 0, 32, TEXT_RIGHT, app.colors.white, "Time: %02d:%02d", m, s);
+		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.white, 190, tr("hud.time", "Time: %02d:%02d"), m, s);
 	}
 	else
 	{
-		drawText(SCREEN_WIDTH - 10, 0, 32, TEXT_RIGHT, app.colors.red, "Time: %02d:%02d", m, s);
+		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.red, 190, tr("hud.time", "Time: %02d:%02d"), m, s);
 	}
 
 	if (stage.status == SS_FAILED)
 	{
 		drawRect(0, SCREEN_HEIGHT - 30, SCREEN_WIDTH, 30, 0, 0, 0, 192);
 
-		drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, 32, TEXT_CENTER, app.colors.white, "Press [%s] to retry", SDL_GetScancodeName(app.config.keyControls[CONTROL_RESTART]));
+		drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, 32, TEXT_CENTER, app.colors.white, tr("hud.retry", "Press [%s] to retry"), SDL_GetScancodeName(app.config.keyControls[CONTROL_RESTART]));
 	}
 }
 
@@ -639,7 +671,7 @@ static void initTips(cJSON *root)
 {
 	cJSON *tip;
 
-	memset(stage.tips, '\0', MAX_TIPS * MAX_DESCRIPTION_LENGTH);
+	memset(stage.tips, '\0', MAX_TIPS * MAX_TIP_LENGTH);
 
 	numTips = 0;
 
@@ -647,7 +679,11 @@ static void initTips(cJSON *root)
 
 	for (tip = cJSON_GetObjectItem(root, "tips")->child ; tip != NULL ; tip = tip->next)
 	{
-		STRNCPY(stage.tips[numTips], tip->valuestring, MAX_DESCRIPTION_LENGTH);
+		char key[48];
+
+		snprintf(key, sizeof(key), "stage.%03d.tip%d", stage.num, numTips + 1);
+
+		STRNCPY(stage.tips[numTips], tr(key, tip->valuestring), MAX_TIP_LENGTH);
 
 		numTips++;
 	}

@@ -353,7 +353,7 @@ static const char *labelForKeyName(const char *name)
 /* rewrites [KeyName] in place as [Button] */
 void translateKeyNames(char *buf, int size)
 {
-	char out[1024], name[32];
+	char out[MAX_LINE_LENGTH], name[32];
 	const char *in, *label, *end;
 	int n, len;
 

@@ -131,24 +131,24 @@ static void draw(void)
 	switch (show)
 	{
 		case SHOW_CONTROLS:
-			drawText(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, "CONTROLS");
+			drawTextFit(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("options.controls_title", "CONTROLS"));
 			drawWidgetFrame();
 			drawWidgets("controls");
 			if (!app.awaitingWidgetInput)
 			{
-				drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, "These are the handheld's buttons (fixed)  ::  [Escape] Back");
+				drawTextFit(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, SCREEN_WIDTH - 40, tr("options.buttons_fixed", "These are the handheld's buttons (fixed)  ::  [Escape] Back"));
 			}
 			else
 			{
-				drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, "Press key or joypad button to use");
+				drawTextFit(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, SCREEN_WIDTH - 40, tr("options.press_key", "Press key or joypad button to use"));
 			}
 			break;
 
 		default:
-			drawText(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, "OPTIONS");
+			drawTextFit(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("options.title", "OPTIONS"));
 			drawWidgetFrame();
 			drawWidgets("options");
-			drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, "Restart the game to apply resolution and fullscreen options.");
+			drawTextFit(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 32, TEXT_CENTER, app.colors.yellow, SCREEN_WIDTH - 40, tr("options.restart", "Restart the game to apply resolution and fullscreen options."));
 			break;
 	}
 }

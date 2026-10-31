@@ -222,7 +222,7 @@ typedef struct {
 	int reset;
 	int status;
 	int nextStageTimer;
-	char tips[MAX_TIPS][MAX_DESCRIPTION_LENGTH];
+	char tips[MAX_TIPS][MAX_TIP_LENGTH];
 	CloneData cloneDataHead, *cloneDataTail;
 	Quadtree quadtree;
 	struct {
@@ -250,7 +250,7 @@ typedef struct {
 struct Widget {
 	char name[MAX_NAME_LENGTH];
 	char groupName[MAX_NAME_LENGTH];
-	char text[MAX_NAME_LENGTH];
+	char text[MAX_WIDGET_TEXT_LENGTH];
 	int type;
 	int x;
 	int y;

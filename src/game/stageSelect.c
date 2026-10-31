@@ -153,14 +153,14 @@ static void drawStages(void)
 
 	oldDraw();
 
-	drawText(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, "SELECT STAGE");
+	drawTextFit(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("stageselect.title", "SELECT STAGE"));
 
 	drawRect(r.x, r.y, r.w, r.h, 0, 0, 0, 255);
 	drawOutlineRect(r.x, r.y, r.w, r.h, 255, 255, 255, 255);
 
-	drawText(r.x + 85, y, 48, TEXT_LEFT, app.colors.white, "Stage");
-	drawText(r.x + (r.w / 2) - 48, y, 48, TEXT_LEFT, app.colors.white, "Coins");
-	drawText(r.x + r.w - 64, y, 48, TEXT_RIGHT, app.colors.white, "Items");
+	drawTextFit(r.x + 85, y, 48, TEXT_LEFT, app.colors.white, 190, tr("stageselect.stage", "Stage"));
+	drawTextFit(r.x + (r.w / 2) - 48, y, 48, TEXT_LEFT, app.colors.white, 190, tr("stageselect.coins", "Coins"));
+	drawTextFit(r.x + r.w - 64, y, 48, TEXT_RIGHT, app.colors.white, 200, tr("stageselect.items", "Items"));
 
 	y += 56;
 
@@ -224,15 +224,15 @@ static void drawStages(void)
 		}
 	}
 
-	drawText(r.x + 25, r.y + r.h - 40, 32, TEXT_LEFT, app.colors.white, "[Escape] Back");
+	drawTextFit(r.x + 25, r.y + r.h - 40, 32, TEXT_LEFT, app.colors.white, r.w / 2 - 40, tr("stageselect.back", "[Escape] Back"));
 
 	if (start <= game.stagesComplete + 1)
 	{
-		drawText(r.x + r.w - 25, r.y + r.h - 40, 32, TEXT_RIGHT, app.colors.white, "[Return] Start");
+		drawTextFit(r.x + r.w - 25, r.y + r.h - 40, 32, TEXT_RIGHT, app.colors.white, r.w / 2 - 40, tr("stageselect.start", "[Return] Start"));
 	}
 	else
 	{
-		drawText(r.x + r.w - 25, r.y + r.h - 40, 32, TEXT_RIGHT, app.colors.lightGrey, "Stage is locked");
+		drawTextFit(r.x + r.w - 25, r.y + r.h - 40, 32, TEXT_RIGHT, app.colors.lightGrey, r.w / 2 - 40, tr("stageselect.locked", "Stage is locked"));
 	}
 }
 

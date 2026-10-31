@@ -180,7 +180,7 @@ void drawWidgets(const char *groupName)
 {
 	Widget *w;
 	SDL_Color c;
-	char controlText[MAX_NAME_LENGTH];
+	char controlText[MAX_WIDGET_TEXT_LENGTH];
 
 	for (w = app.widgetsHead.next ; w != NULL ; w = w->next)
 	{
@@ -205,7 +205,7 @@ void drawWidgets(const char *groupName)
 					{
 						if (strcmp(w->options[1], "") != 0)
 						{
-							sprintf(controlText, "%s or %s", w->options[0], w->options[1]);
+							sprintf(controlText, tr("controls.or", "%s or %s"), w->options[0], w->options[1]);
 						}
 						else
 						{
@@ -314,7 +314,7 @@ void updateControlWidget(Widget *w, int c)
 
 	if (app.config.joypadControls[c] != -1)
 	{
-		sprintf(w->options[1], "Btn %d", app.config.joypadControls[c]);
+		sprintf(w->options[1], tr("controls.button", "Btn %d"), app.config.joypadControls[c]);
 	}
 	else
 	{
@@ -366,7 +366,13 @@ static void loadWidgets(const char *filename)
 		STRNCPY(w->groupName, cJSON_GetObjectItem(node, "groupName")->valuestring, MAX_NAME_LENGTH);
 		w->x = cJSON_GetObjectItem(node, "x")->valueint;
 		w->y = cJSON_GetObjectItem(node, "y")->valueint;
-		STRNCPY(w->text, cJSON_GetObjectItem(node, "text")->valuestring, MAX_NAME_LENGTH);
+		{
+			char key[MAX_NAME_LENGTH * 2 + 24];
+
+			snprintf(key, sizeof(key), "widget.%s.%s.text", w->groupName, w->name);
+
+			STRNCPY(w->text, tr(key, cJSON_GetObjectItem(node, "text")->valuestring), MAX_WIDGET_TEXT_LENGTH);
+		}
 
 		switch (w->type)
 		{
@@ -414,11 +420,20 @@ static void setupOptions(Widget *w, cJSON *root)
 
 	for (node = root->child ; node != NULL ; node = node->next)
 	{
-		l = strlen(node->valuestring) + 1;
+		{
+			char key[MAX_NAME_LENGTH * 2 + 24];
+			const char *shown;
 
-		w->options[i] = malloc(l);
+			snprintf(key, sizeof(key), "widget.%s.%s.opt%d", w->groupName, w->name, i + 1);
 
-		STRNCPY(w->options[i], node->valuestring, l);
+			shown = tr(key, node->valuestring);
+
+			l = strlen(shown) + 1;
+
+			w->options[i] = malloc(l);
+
+			STRNCPY(w->options[i], shown, l);
+		}
 
 		i++;
 	}

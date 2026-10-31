@@ -28,4 +28,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "defs.h"
 #include "structs.h"
+#include "system/lang.h"
 extern int wcEnvInt(const char *name, int def);

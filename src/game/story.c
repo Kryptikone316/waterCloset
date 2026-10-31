@@ -29,7 +29,13 @@ static char *text;
 
 void initStory(void (*done)(void))
 {
-	text = readFile(getFileLocation("data/misc/story.txt"));
+	{
+		char *raw = readFile(getFileLocation("data/misc/story.txt"));
+
+		text = strdup(tr("story.text", raw));
+
+		free(raw);
+	}
 
 	returnFromStory = done;
 
@@ -63,7 +69,7 @@ static void draw(void)
 
 	app.text.wrap = SCREEN_WIDTH - 200;
 
-	drawText(SCREEN_WIDTH / 2, 25, 64, TEXT_CENTER, app.colors.white, "The Story!");
+	drawTextFit(SCREEN_WIDTH / 2, 25, 64, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("story.title", "The Story!"));
 
 	drawText(100, 100, 40, TEXT_LEFT, app.colors.white, text);
 

@@ -83,8 +83,8 @@ static void draw(void)
 
 	if (timeout > 0)
 	{
-		drawText(SCREEN_WIDTH / 2, 50, 32, TEXT_CENTER, app.colors.white, "Well, that answers the question of whether Walter was hallucinating.");
-		drawText(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 64, 32, TEXT_CENTER, app.colors.white, "Thanks for playing.");
+		drawTextFit(SCREEN_WIDTH / 2, 50, 32, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 40, tr("ending.line1", "Well, that answers the question of whether Walter was hallucinating."));
+		drawTextFit(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 64, 32, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 40, tr("ending.line2", "Thanks for playing."));
 	}
 
 	drawWipe();

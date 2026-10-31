@@ -129,7 +129,7 @@ static void drawStats(void)
 
 	oldDraw();
 
-	drawText(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, "STATS");
+	drawTextFit(SCREEN_WIDTH / 2, 25, 96, TEXT_CENTER, app.colors.white, SCREEN_WIDTH - 200, tr("stats.title", "STATS"));
 
 	drawRect(r.x, r.y, r.w, r.h, 0, 0, 0, 255);
 	drawOutlineRect(r.x, r.y, r.w, r.h, 255, 255, 255, 255);
@@ -205,22 +205,22 @@ static void calculatePercentComplete(void)
 
 static void initStatNames(void)
 {
-	statNames[STAT_PERCENT_COMPLETE] = "Percent complete";
-	statNames[STAT_STAGES_STARTED] = "Stages attempted";
-	statNames[STAT_STAGES_COMPLETED] = "Stages completed";
-	statNames[STAT_FAILS] = "Stages failed";
-	statNames[STAT_DEATHS] = "Times killed";
-	statNames[STAT_CLONES] = "Clones created";
-	statNames[STAT_CLONE_DEATHS] = "Clones killed";
-	statNames[STAT_KEYS] = "Keys collected";
-	statNames[STAT_PLUNGERS] = "Plungers picked up";
-	statNames[STAT_MANHOLE_COVERS] = "Manhole covers picked up";
-	statNames[STAT_WATER_PISTOLS] = "Water pistols picked up";
-	statNames[STAT_ITEMS] = "Items collected";
-	statNames[STAT_COINS] = "Coins collected";
-	statNames[STAT_JUMPS] = "Times jumped";
-	statNames[STAT_MOVED] = "Total distance moved";
-	statNames[STAT_FALLEN] = "Total distance fallen";
-	statNames[STAT_SHOTS_FIRED] = "Water shots fired";
-	statNames[STAT_TIME] = "Time played";
+	statNames[STAT_PERCENT_COMPLETE] = tr("stat.percent_complete", "Percent complete");
+	statNames[STAT_STAGES_STARTED] = tr("stat.stages_started", "Stages attempted");
+	statNames[STAT_STAGES_COMPLETED] = tr("stat.stages_completed", "Stages completed");
+	statNames[STAT_FAILS] = tr("stat.fails", "Stages failed");
+	statNames[STAT_DEATHS] = tr("stat.deaths", "Times killed");
+	statNames[STAT_CLONES] = tr("stat.clones", "Clones created");
+	statNames[STAT_CLONE_DEATHS] = tr("stat.clone_deaths", "Clones killed");
+	statNames[STAT_KEYS] = tr("stat.keys", "Keys collected");
+	statNames[STAT_PLUNGERS] = tr("stat.plungers", "Plungers picked up");
+	statNames[STAT_MANHOLE_COVERS] = tr("stat.manhole_covers", "Manhole covers picked up");
+	statNames[STAT_WATER_PISTOLS] = tr("stat.water_pistols", "Water pistols picked up");
+	statNames[STAT_ITEMS] = tr("stat.items", "Items collected");
+	statNames[STAT_COINS] = tr("stat.coins", "Coins collected");
+	statNames[STAT_JUMPS] = tr("stat.jumps", "Times jumped");
+	statNames[STAT_MOVED] = tr("stat.moved", "Total distance moved");
+	statNames[STAT_FALLEN] = tr("stat.fallen", "Total distance fallen");
+	statNames[STAT_SHOTS_FIRED] = tr("stat.shots_fired", "Water shots fired");
+	statNames[STAT_TIME] = tr("stat.time", "Time played");
 }
