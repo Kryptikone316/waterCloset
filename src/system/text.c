@@ -190,6 +190,7 @@ static HalfFont halfFonts[MAX_HALF_FONTS];
 static int numHalfFonts;
 static HalfFont *currentHalf;
 static char fontPath[512];
+static int fontBold;                     /* the fallback font is thin: drawn emboldened */
 static int fontScale = 100;              /* percent: the fallback font is scaled to the height of the game's own */
 
 static int pointSize(int n)
@@ -227,6 +228,11 @@ static HalfFont *getHalfFont(int size)
 	h->size = size;
 
 	font = TTF_OpenFont(fontPath, pointSize((size + 1) / 2));
+
+	if (font && fontBold)
+	{
+		TTF_SetFontStyle(font, TTF_STYLE_BOLD);
+	}
 	/* A plain ARGB surface, cleared to transparent. The glyphs are copied in as
 	 * they are (no blending), so their soft anti-aliased edges survive: at this
 	 * size nearly every stroke is made of them. */
@@ -531,6 +537,8 @@ void initFonts(void)
 			if (b) TTF_CloseFont(b);
 
 			STRNCPY(fontPath, fallback, sizeof(fontPath));
+
+			fontBold = getenv("WC_FALLBACK_BOLD") ? atoi(getenv("WC_FALLBACK_BOLD")) : 1;
 		}
 
 		/* no font can draw this language: it is shown in English rather than as boxes */
@@ -558,6 +566,11 @@ static void initFont(char *filename)
 	memset(&glyphs, 0, sizeof(SDL_Rect) * 128);
 
 	font = TTF_OpenFont(filename, pointSize(FONT_SIZE));
+
+	if (font && fontBold)
+	{
+		TTF_SetFontStyle(font, TTF_STYLE_BOLD);
+	}
 
 	surface = SDL_CreateRGBSurface(0, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE, 32, 0, 0, 0, 0xff);
 

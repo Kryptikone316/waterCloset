@@ -628,20 +628,20 @@ static void drawHud(void)
 
 	hudText(512, TEXT_CENTER, stage.totalKeys > 0 ? app.colors.white : app.colors.darkGrey, 160, tr("hud.keys", "Keys: %d"), stage.keys);
 
-	hudText(768, TEXT_CENTER, getColorForItems(stage.coins, stage.totalCoins), 240, tr("hud.coins", "Coins: %d / %d"), stage.coins, stage.totalCoins);
+	hudText(768, TEXT_CENTER, getColorForItems(stage.coins, stage.totalCoins), 200, tr("hud.coins", "Coins: %d / %d"), stage.coins, stage.totalCoins);
 
-	hudText(1024, TEXT_CENTER, getColorForItems(stage.items, stage.totalItems), 210, tr("hud.items", "Items: %d / %d"), stage.items, stage.totalItems);
+	hudText(1024, TEXT_CENTER, getColorForItems(stage.items, stage.totalItems), 170, tr("hud.items", "Items: %d / %d"), stage.items, stage.totalItems);
 
 	s = (stage.time / 60) % 60;
 	m = stage.time / 3600;
 
 	if (m > 0 || s > 10 || stage.time % 30 < 15)
 	{
-		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.white, 190, tr("hud.time", "Time: %02d:%02d"), m, s);
+		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.white, 160, tr("hud.time", "Time: %02d:%02d"), m, s);
 	}
 	else
 	{
-		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.red, 190, tr("hud.time", "Time: %02d:%02d"), m, s);
+		hudText(SCREEN_WIDTH - 10, TEXT_RIGHT, app.colors.red, 160, tr("hud.time", "Time: %02d:%02d"), m, s);
 	}
 
 	if (stage.status == SS_FAILED)

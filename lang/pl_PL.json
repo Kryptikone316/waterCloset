@@ -42,7 +42,7 @@
   "hud.clones": "Klony: %d / %d",
   "hud.keys": "Klucze: %d",
   "hud.coins": "Monety: %d / %d",
-  "hud.items": "Przedmioty: %d / %d",
+  "hud.items": "Przedm.: %d / %d",
   "hud.time": "Czas: %02d:%02d",
   "hud.retry": "Naciśnij [%s], aby spróbować ponownie",
   "widget.controls.left.text": "Lewo",
